@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-api
+  namespace: default
+  labels:
+    app: backend-api
+spec:
+  type: NodePort
+  ports:
+  - port: 8081
+    protocol: TCP
+    targetPort: 8081
+    nodePort: 30037
+  selector:
+    app: backend-api
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-api
+  namespace: default
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-api
+  template:
+    metadata:
+      labels:
+        app: backend-api
+    spec:
+#      imagePullSecrets:
+#      - name: ap-southeast-1-ecr-registry
+#      nodeSelector:
+#        prod: "backend"
+#      tolerations:
+#      - key: "prod"
+#        operator: "Equal"
+#        value: "backend"
+#        effect: "NoSchedule"
+      containers:
+      - name: backend-api
+        image: backend-task/get-user-name:latest
+#        command: ["java","-jar","/app.jar"]
+        imagePullPolicy: Never
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 3 
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          failureThreshold: 3
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "100Mi"
+          limits:
+            cpu: "50m"
+            memory: "100Mi"
+        ports:
+        - containerPort: 8081
+        env:
+          - name: "NAME"
+            value: "Viraj"
+
